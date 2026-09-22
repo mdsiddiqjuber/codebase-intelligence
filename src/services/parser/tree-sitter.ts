@@ -1,5 +1,7 @@
-import { Parser, Language } from "web-tree-sitter";
+import { Parser } from "web-tree-sitter";
 import path from "path";
+import { detectLanguage } from "./language-detector";
+import { loadLanguage } from "./language-loader";
 
 let parserPromise: Promise<Parser> | null = null;
 
@@ -21,17 +23,23 @@ async function getParser() {
   return parserPromise;
 }
 
-export async function parseTypeScript(sourceCode: string) {
+export async function parseSourceFile(
+  sourceCode: string,
+  filePath: string
+) {
+  const language = detectLanguage(filePath);
+
+  if (!language) {
+    throw new Error(
+      `Unsupported file type: ${filePath}`
+    );
+  }
+
   const parser = await getParser();
 
-  const languagePath = path.join(
-    process.cwd(),
-    "node_modules/tree-sitter-typescript/tree-sitter-typescript.wasm"
-  );
+  const treeSitterLanguage = await loadLanguage(language);
 
-  const language = await Language.load(languagePath);
-
-  parser.setLanguage(language);
+  parser.setLanguage(treeSitterLanguage);
 
   return parser.parse(sourceCode);
 }
