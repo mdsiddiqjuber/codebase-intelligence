@@ -8,6 +8,8 @@ import { processWithConcurrency } from "./worker-pool";
 import type { CodeChunk } from "@/types/code-chunk";
 import type { IngestionResult } from "@/types/ingestion";
 
+import { indexCodeChunks } from "@/services/vector/batch-indexer";
+
 interface Repository {
   id: string;
   name: string;
@@ -98,6 +100,10 @@ export async function ingestRepository(
     }
 
     allChunks.push(...result.chunks);
+  }
+
+  if (allChunks.length > 0) {
+    await indexCodeChunks(allChunks);
   }
 
   return {
