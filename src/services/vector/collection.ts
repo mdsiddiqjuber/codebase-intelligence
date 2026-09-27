@@ -12,14 +12,20 @@ export async function ensureCodeCollection() {
       collection.name === CODE_COLLECTION
   );
 
-  if (exists) {
-    return;
+  if (!exists) {
+    await qdrant.createCollection(CODE_COLLECTION, {
+      vectors: {
+        size: VECTOR_SIZE,
+        distance: "Cosine",
+      },
+    });
   }
 
-  await qdrant.createCollection(CODE_COLLECTION, {
-    vectors: {
-      size: VECTOR_SIZE,
-      distance: "Cosine",
-    },
-  });
+  await qdrant.createPayloadIndex(
+    CODE_COLLECTION,
+    {
+      field_name: "repositoryId",
+      field_schema: "keyword",
+    }
+  );
 }
